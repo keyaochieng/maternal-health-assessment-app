@@ -41,3 +41,20 @@ def create_patient(
 def list_patients(db: Session = Depends(get_db)) -> list[Patient]:
     statement = select(Patient).order_by(Patient.last_name, Patient.first_name)
     return list(db.scalars(statement).all())
+
+@router.get("/{patient_id}", response_model=PatientResponse)
+def get_patient(
+    patient_id: str,
+    db: Session = Depends(get_db),
+) -> Patient:
+    patient = db.scalar(
+        select(Patient).where(Patient.patient_id == patient_id)
+    )
+
+    if patient is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Patient '{patient_id}' was not found.",
+        )
+
+    return patient
