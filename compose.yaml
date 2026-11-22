@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    container_name: intellisoft-postgres
+    restart: unless-stopped
+    environment:
+      # Local development credentials.
+      POSTGRES_DB: intellisoft
+      POSTGRES_USER: intellisoft
+      POSTGRES_PASSWORD: local_dev_password
+    ports:
+      # port 5432 is already in use on my laptop using 5433 instead.
+      - "5433:5432"
+    volumes:
+      # This keeps database records when the container is stopped or restarted.
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
