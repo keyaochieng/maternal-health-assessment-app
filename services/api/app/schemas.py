@@ -107,3 +107,10 @@ class AssessmentResponse(BaseModel):
     on_diet: Literal["Yes", "No"] | None
     using_drugs: Literal["Yes", "No"] | None
     comments: str
+
+class PatientReportItem(BaseModel):
+    patient_id: str
+    patient_name: str
+    age: int
+    visit_date: date
+    last_bmi_status: Literal["Underweight", "Normal", "Overweight"]
