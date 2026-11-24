@@ -6,7 +6,6 @@
   background: #fff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --paper: #fff;
   --ink: #171918;
   --muted: #656b70;
   --rule: #d7dadd;
@@ -26,7 +25,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -34,7 +34,7 @@ select {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
-a:focus-visible {
+textarea:focus-visible {
   outline: 3px solid #8aa8ff;
   outline-offset: 3px;
 }

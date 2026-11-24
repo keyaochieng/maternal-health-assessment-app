@@ -1,21 +1,17 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import Base, engine
-from app.routers import patients
-
-from app.routers import vitals
-
-from app.routers import assessments
+from app.routers import assessments, patients, risk, vitals
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # I create the starter table when the API starts; later, I can manage schema changes with migrations.
+    # I create the starter tables when the API starts.
     Base.metadata.create_all(bind=engine)
     yield
 
@@ -23,13 +19,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="Intellisoft Patient Assessment API",
     version="0.1.0",
-    description="API for patient registration, vitals, and assessments.",
+    description="API for patient registration, vitals, assessments, and maternal risk classification.",
     lifespan=lifespan,
 )
 
 app.include_router(patients.router)
 app.include_router(vitals.router)
 app.include_router(assessments.router)
+app.include_router(risk.router)
 
 
 @app.get("/health", tags=["Health"])

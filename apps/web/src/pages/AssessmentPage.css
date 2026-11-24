@@ -1,0 +1,149 @@
+.assessment-page {
+  width: min(100%, 970px);
+  margin: 0 auto;
+  padding: 52px 0 64px;
+}
+
+.assessment-intro {
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.assessment-intro h1 {
+  margin: 9px 0 7px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(33px, 4vw, 46px);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+}
+
+.assessment-intro > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.assessment-form {
+  padding-top: 24px;
+}
+
+.assessment-form-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 21px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.assessment-form-heading h2 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.assessment-fields {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr);
+  gap: 24px 30px;
+}
+
+.yes-no-field {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.yes-no-field legend {
+  margin-bottom: 10px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.yes-no-field legend b {
+  color: var(--accent);
+}
+
+.yes-no-options {
+  display: flex;
+  gap: 10px;
+}
+
+.yes-no-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 90px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid #bfc4c8;
+  font-size: 11px;
+}
+
+.yes-no-options input {
+  accent-color: var(--accent);
+}
+
+.comments-field {
+  grid-column: 1 / -1;
+}
+
+.comments-field textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 10px;
+  resize: vertical;
+  border: 1px solid #bfc4c8;
+  border-radius: 0;
+  background: #fff;
+  font: inherit;
+  font-size: 11px;
+}
+
+.comments-field textarea:focus {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent-light);
+  outline-offset: 1px;
+}
+
+.assessment-form .form-footer {
+  margin-top: 22px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+}
+
+.assessment-saved {
+  margin-top: 25px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.assessment-saved h2 {
+  margin: 8px 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.05em;
+}
+
+.assessment-saved > p:last-child {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .assessment-page {
+    padding: 36px 0 44px;
+  }
+
+  .assessment-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .comments-field {
+    grid-column: auto;
+  }
+}

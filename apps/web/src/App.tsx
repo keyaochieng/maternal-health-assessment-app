@@ -1,92 +1,112 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
+import { todayInNairobi } from "./api";
+import AssessmentPage from "./pages/AssessmentPage";
+import PatientListPage from "./pages/PatientListPage";
+import PatientRegistrationPage from "./pages/PatientRegistrationPage";
 import VitalsPage from "./pages/VitalsPage";
-import type { Patient } from "./types";
+import type { AssessmentType, Patient, SavedVitals } from "./types";
 
-type ApiResponse = Patient & {
-  detail?: string | { msg?: string }[];
+type Screen = "patients" | "registration" | "vitals" | "assessment";
+
+type SavedAppState = {
+  screen: Screen;
+  selectedPatient: Patient | null;
+  visitDate: string;
+  assessmentType: AssessmentType;
 };
 
-type Page = "registration" | "vitals";
+const VISIT_STATE_KEY = "mamashealth-current-visit";
 
-function todayInNairobi(): string {
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Africa/Nairobi",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-      .formatToParts(new Date())
-      .map(({ type, value }) => [type, value]),
-  );
+function readSavedAppState(): SavedAppState {
+  const defaultState: SavedAppState = {
+    screen: "patients",
+    selectedPatient: null,
+    visitDate: "",
+    assessmentType: "general",
+  };
 
-  return `${parts.year}-${parts.month}-${parts.day}`;
+  try {
+    const saved = sessionStorage.getItem(VISIT_STATE_KEY);
+    if (!saved) return defaultState;
+
+    const parsed = JSON.parse(saved) as Partial<SavedAppState>;
+    const validScreens: Screen[] = [
+      "patients",
+      "registration",
+      "vitals",
+      "assessment",
+    ];
+
+    if (!parsed.screen || !validScreens.includes(parsed.screen)) {
+      return defaultState;
+    }
+
+    return {
+      screen: parsed.screen,
+      selectedPatient: parsed.selectedPatient ?? null,
+      visitDate: parsed.visitDate ?? "",
+      assessmentType:
+        parsed.assessmentType === "overweight" ? "overweight" : "general",
+    };
+  } catch {
+    return defaultState;
+  }
 }
 
 function App() {
-  const [activePage, setActivePage] = useState<Page>("registration");
-  const [isSaving, setIsSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [savedPatient, setSavedPatient] = useState<Patient | null>(null);
+  const [initialState] = useState(readSavedAppState);
+  const [screen, setScreen] = useState<Screen>(initialState.screen);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
+    initialState.selectedPatient,
+  );
+  const [visitDate, setVisitDate] = useState(initialState.visitDate);
+  const [assessmentType, setAssessmentType] = useState<AssessmentType>(
+    initialState.assessmentType,
+  );
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setIsSaving(true);
-    setErrorMessage("");
-
-    const formData = new FormData(event.currentTarget);
-    const value = (fieldName: string) =>
-      String(formData.get(fieldName) ?? "").trim();
-
-    const patientData = {
-      patient_id: value("patient_id"),
-      registration_date: value("registration_date"),
-      first_name: value("first_name"),
-      middle_name: value("middle_name") || null,
-      last_name: value("last_name"),
-      date_of_birth: value("date_of_birth"),
-      gender: value("gender"),
+  useEffect(() => {
+    const savedState: SavedAppState = {
+      screen,
+      selectedPatient,
+      visitDate,
+      assessmentType,
     };
 
-    try {
-      const response = await fetch("/api/patients", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(patientData),
-      });
+    sessionStorage.setItem(VISIT_STATE_KEY, JSON.stringify(savedState));
+  }, [screen, selectedPatient, visitDate, assessmentType]);
 
-      const result = (await response.json()) as ApiResponse;
-
-      if (!response.ok) {
-        const detail = result.detail;
-        const message =
-          typeof detail === "string"
-            ? detail
-            : Array.isArray(detail)
-              ? detail.map((item) => item.msg).filter(Boolean).join(" ")
-              : "Please review the details and try again.";
-
-        setErrorMessage(message);
-        return;
-      }
-
-      setSavedPatient(result);
-      setActivePage("vitals");
-    } catch {
-      setErrorMessage(
-        "I couldn't reach the API. Check that FastAPI and PostgreSQL are running.",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  function startVisit(patient: Patient) {
+    setSelectedPatient(patient);
+    setVisitDate("");
+    setAssessmentType("general");
+    setScreen("vitals");
   }
+
+  function handleVitalsSaved(vitals: SavedVitals) {
+    setVisitDate(vitals.visit_date);
+    setAssessmentType(vitals.next_assessment);
+    setScreen("assessment");
+  }
+
+  function finishAssessment() {
+    setSelectedPatient(null);
+    setVisitDate("");
+    setAssessmentType("general");
+    setScreen("patients");
+    setRefreshKey((value) => value + 1);
+  }
+
+  const isVisitInProgress = screen === "vitals" || screen === "assessment";
 
   return (
     <div className="app-shell">
       <header className="masthead">
         <a className="wordmark" href="/" aria-label="mamashealth home">
-          <span className="brand-mark" aria-hidden="true">+</span>
+          <span className="brand-mark" aria-hidden="true">
+            +
+          </span>
           <span>mamashealth</span>
         </a>
 
@@ -97,186 +117,78 @@ function App() {
         <time className="masthead-date">{todayInNairobi()}</time>
       </header>
 
-      <nav className="workflow" aria-label="Patient workflow">
-        <div
-          className={`workflow-step ${
-            activePage === "registration" ? "is-active" : ""
-          }`}
-          aria-current={activePage === "registration" ? "step" : undefined}
+      <nav className="main-nav" aria-label="Main navigation">
+        <button
+          className={
+            screen === "patients" ? "nav-button is-active" : "nav-button"
+          }
+          onClick={() => setScreen("patients")}
         >
-          <span className="step-number">01</span>
-          <span>Registration</span>
-        </div>
+          Patients
+        </button>
 
-        <div
-          className={`workflow-step ${
-            activePage === "vitals" ? "is-active" : ""
-          }`}
-          aria-current={activePage === "vitals" ? "step" : undefined}
+        <button
+          className={
+            screen === "registration" ? "nav-button is-active" : "nav-button"
+          }
+          onClick={() => setScreen("registration")}
         >
-          <span className="step-number">02</span>
-          <span>Vitals</span>
-        </div>
-
-        <div className="workflow-step">
-          <span className="step-number">03</span>
-          <span>Assessment</span>
-        </div>
-
-        <div className="workflow-step">
-          <span className="step-number">04</span>
-          <span>Patient list</span>
-        </div>
+          Register patient
+        </button>
       </nav>
 
-      {activePage === "registration" ? (
-        <main className="main-layout">
-          <section className="page-intro">
-            <p className="eyebrow">NEW PATIENT / INTAKE</p>
-            <div className="large-number" aria-hidden="true">01</div>
-            <h1>Register<br />the patient.</h1>
-            <p className="intro-copy">
-              Create a patient record before recording a visit or assessment.
-            </p>
-            <div className="intro-rule" />
-            <p className="intro-note">
-              A unique patient number keeps every visit connected to the right
-              person.
-            </p>
-          </section>
+      {isVisitInProgress && (
+        <div className="visit-progress" aria-label="Current visit progress">
+          <span className={screen === "vitals" ? "is-active" : "is-complete"}>
+            01 &nbsp; Vitals
+          </span>
+          <span className={screen === "assessment" ? "is-active" : ""}>
+            02 &nbsp; Assessment
+          </span>
+        </div>
+      )}
 
-          <section className="form-area" aria-labelledby="form-title">
-            <div className="form-heading">
-              <div>
-                <p className="eyebrow">PATIENT RECORD</p>
-                <h2 id="form-title">Personal details</h2>
-              </div>
-              <p className="required-note"><span>*</span> Required</p>
-            </div>
+      {screen === "patients" && (
+        <PatientListPage
+          refreshKey={refreshKey}
+          onRegister={() => setScreen("registration")}
+          onStartVisit={startVisit}
+        />
+      )}
 
-            {errorMessage && (
-              <div className="message message-error" role="alert">
-                <strong>Could not save</strong>
-                <span>{errorMessage}</span>
-              </div>
-            )}
+      {screen === "registration" && (
+        <PatientRegistrationPage
+          onRegistered={(patient) => {
+            setSelectedPatient(patient);
+            setVisitDate("");
+            setScreen("vitals");
+          }}
+        />
+      )}
 
-            <form
-              onSubmit={handleSubmit}
-              onChange={() => setErrorMessage("")}
-            >
-              <div className="form-section">
-                <div className="section-heading">
-                  <span className="section-letter">A</span>
-                  <h3>Patient identity</h3>
-                </div>
+      {screen === "vitals" && selectedPatient && (
+        <VitalsPage patient={selectedPatient} onSaved={handleVitalsSaved} />
+      )}
 
-                <label className="field patient-number">
-                  <span>Patient No. <b>*</b></span>
-                  <input
-                    name="patient_id"
-                    type="text"
-                    placeholder="e.g. PAT-00824"
-                    autoComplete="off"
-                    maxLength={50}
-                    required
-                  />
-                  <small>This number must be unique.</small>
-                </label>
-
-                <div className="field-grid">
-                  <label className="field">
-                    <span>First name <b>*</b></span>
-                    <input
-                      name="first_name"
-                      type="text"
-                      autoComplete="given-name"
-                      maxLength={100}
-                      required
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Middle name</span>
-                    <input
-                      name="middle_name"
-                      type="text"
-                      autoComplete="additional-name"
-                      maxLength={100}
-                    />
-                    <small>Optional</small>
-                  </label>
-
-                  <label className="field">
-                    <span>Last name <b>*</b></span>
-                    <input
-                      name="last_name"
-                      type="text"
-                      autoComplete="family-name"
-                      maxLength={100}
-                      required
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="form-section">
-                <div className="section-heading">
-                  <span className="section-letter">B</span>
-                  <h3>Registration details</h3>
-                </div>
-
-                <div className="field-grid">
-                  <label className="field">
-                    <span>Date of birth <b>*</b></span>
-                    <input
-                      name="date_of_birth"
-                      type="date"
-                      autoComplete="bday"
-                      required
-                    />
-                  </label>
-
-                  <label className="field">
-                    <span>Gender <b>*</b></span>
-                    <select name="gender" defaultValue="" required>
-                      <option value="" disabled>Select an option</option>
-                      <option value="Female">Female</option>
-                      <option value="Male">Male</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </label>
-
-                  <label className="field">
-                    <span>Registration date <b>*</b></span>
-                    <input
-                      name="registration_date"
-                      type="date"
-                      defaultValue={todayInNairobi()}
-                      required
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="form-footer">
-                <p>Fields marked <b>*</b> are required.</p>
-                <button type="submit" disabled={isSaving}>
-                  {isSaving ? "Saving…" : "Save patient"}
-                  {!isSaving && <span aria-hidden="true">↗</span>}
-                </button>
-              </div>
-            </form>
-          </section>
-        </main>
-      ) : savedPatient ? (
-        <VitalsPage patient={savedPatient} />
-      ) : null}
+      {screen === "assessment" && selectedPatient && (
+        <AssessmentPage
+          patient={selectedPatient}
+          visitDate={visitDate}
+          assessmentType={assessmentType}
+          onSaved={finishAssessment}
+        />
+      )}
 
       <footer className="page-footer">
         <span>mamashealth</span>
         <span>
-          Patient intake · Step {activePage === "registration" ? "1" : "2"} of 4
+          {screen === "patients"
+            ? "Patient records"
+            : screen === "registration"
+              ? "New patient"
+              : screen === "vitals"
+                ? "New visit · Vitals"
+                : "New visit · Assessment"}
         </span>
       </footer>
     </div>
