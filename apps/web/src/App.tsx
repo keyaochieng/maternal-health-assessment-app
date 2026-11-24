@@ -1,122 +1,283 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, type FormEvent } from "react";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+type SavedPatient = {
+  id: number;
+  patient_id: string;
+  registration_date: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  date_of_birth: string;
+  gender: string;
+};
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+type ApiResponse = SavedPatient & {
+  detail?: string | { msg?: string }[];
+};
 
-      <div className="ticks"></div>
+function todayInNairobi(): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Africa/Nairobi",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+      .formatToParts(new Date())
+      .map(({ type, value }) => [type, value]),
+  );
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
-export default App
+function App() {
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [savedPatient, setSavedPatient] = useState<SavedPatient | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsSaving(true);
+    setErrorMessage("");
+    setSavedPatient(null);
+
+    const formData = new FormData(event.currentTarget);
+    const value = (fieldName: string) =>
+      String(formData.get(fieldName) ?? "").trim();
+
+    const patientData = {
+      patient_id: value("patient_id"),
+      registration_date: value("registration_date"),
+      first_name: value("first_name"),
+      middle_name: value("middle_name") || null,
+      last_name: value("last_name"),
+      date_of_birth: value("date_of_birth"),
+      gender: value("gender"),
+    };
+
+    try {
+      const response = await fetch("/api/patients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patientData),
+      });
+
+      const result = (await response.json()) as ApiResponse;
+
+      if (!response.ok) {
+        const detail = result.detail;
+        const message =
+          typeof detail === "string"
+            ? detail
+            : Array.isArray(detail)
+              ? detail.map((item) => item.msg).filter(Boolean).join(" ")
+              : "Please review the details and try again.";
+
+        setErrorMessage(message);
+        return;
+      }
+
+      setSavedPatient(result);
+    } catch {
+      setErrorMessage(
+        "I couldn't reach the API. Check that FastAPI and PostgreSQL are running.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="app-shell">
+      <header className="masthead">
+        <a className="wordmark" href="/" aria-label="mamashealth home">
+          <span className="brand-mark" aria-hidden="true">+</span>
+          <span>mamashealth</span>
+        </a>
+
+        <div className="masthead-label">
+          MATERNAL HEALTH <span>—</span> PATIENT RECORDS
+        </div>
+
+        <time className="masthead-date">{todayInNairobi()}</time>
+      </header>
+
+      <nav className="workflow" aria-label="Patient workflow">
+        <div className="workflow-step is-active" aria-current="step">
+          <span className="step-number">01</span>
+          <span>Registration</span>
+        </div>
+        <div className="workflow-step">
+          <span className="step-number">02</span>
+          <span>Vitals</span>
+        </div>
+        <div className="workflow-step">
+          <span className="step-number">03</span>
+          <span>Assessment</span>
+        </div>
+        <div className="workflow-step">
+          <span className="step-number">04</span>
+          <span>Patient list</span>
+        </div>
+      </nav>
+
+      <main className="main-layout">
+        <section className="page-intro">
+          <p className="eyebrow">NEW PATIENT / INTAKE</p>
+          <div className="large-number" aria-hidden="true">01</div>
+          <h1>Register<br />the patient.</h1>
+          <p className="intro-copy">
+            Create a patient record before recording a visit or assessment.
+          </p>
+          <div className="intro-rule" />
+          <p className="intro-note">
+            A unique patient number keeps every visit connected to the right
+            person.
+          </p>
+        </section>
+
+        <section className="form-area" aria-labelledby="form-title">
+          <div className="form-heading">
+            <div>
+              <p className="eyebrow">PATIENT RECORD</p>
+              <h2 id="form-title">Personal details</h2>
+            </div>
+            <p className="required-note"><span>*</span> Required</p>
+          </div>
+
+          {errorMessage && (
+            <div className="message message-error" role="alert">
+              <strong>Could not save</strong>
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {savedPatient && (
+            <div className="message message-success" role="status">
+              <strong>Patient registered</strong>
+              <span>
+                {savedPatient.first_name}{" "}
+                {savedPatient.middle_name
+                  ? `${savedPatient.middle_name} `
+                  : ""}
+                {savedPatient.last_name} · {savedPatient.patient_id}
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} onChange={() => setErrorMessage("")}>
+            <div className="form-section">
+              <div className="section-heading">
+                <span className="section-letter">A</span>
+                <h3>Patient identity</h3>
+              </div>
+
+              <label className="field patient-number">
+                <span>Patient No. <b>*</b></span>
+                <input
+                  name="patient_id"
+                  type="text"
+                  placeholder="e.g. PAT-00824"
+                  autoComplete="off"
+                  maxLength={50}
+                  required
+                />
+                <small>This number must be unique.</small>
+              </label>
+
+              <div className="field-grid">
+                <label className="field">
+                  <span>First name <b>*</b></span>
+                  <input
+                    name="first_name"
+                    type="text"
+                    autoComplete="given-name"
+                    maxLength={100}
+                    required
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Middle name</span>
+                  <input
+                    name="middle_name"
+                    type="text"
+                    autoComplete="additional-name"
+                    maxLength={100}
+                  />
+                  <small>Optional</small>
+                </label>
+
+                <label className="field">
+                  <span>Last name <b>*</b></span>
+                  <input
+                    name="last_name"
+                    type="text"
+                    autoComplete="family-name"
+                    maxLength={100}
+                    required
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="form-section">
+              <div className="section-heading">
+                <span className="section-letter">B</span>
+                <h3>Registration details</h3>
+              </div>
+
+              <div className="field-grid">
+                <label className="field">
+                  <span>Date of birth <b>*</b></span>
+                  <input
+                    name="date_of_birth"
+                    type="date"
+                    autoComplete="bday"
+                    required
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Gender <b>*</b></span>
+                  <select name="gender" defaultValue="" required>
+                    <option value="" disabled>Select an option</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </label>
+
+                <label className="field">
+                  <span>Registration date <b>*</b></span>
+                  <input
+                    name="registration_date"
+                    type="date"
+                    defaultValue={todayInNairobi()}
+                    required
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="form-footer">
+              <p>Fields marked <b>*</b> are required.</p>
+              <button type="submit" disabled={isSaving}>
+                {isSaving ? "Saving…" : "Save patient"}
+                {!isSaving && <span aria-hidden="true">↗</span>}
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+
+      <footer className="page-footer">
+        <span>mamashealth</span>
+        <span>Patient intake · Step 1 of 4</span>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
