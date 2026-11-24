@@ -1,30 +1,46 @@
 # Maternal Care Patient Assessment
 
-A full-stack patient registration and assessment app with a maternal health risk classification API.
+A web application for registering patients, recording visits, collecting assessments, and classifying maternal health risk with a trained machine learning model.
 
-## Architecture
+## Technology
 
-This repository uses a TypeScript/React web client, a Python/FastAPI service, PostgreSQL for durable patient and visit data, and a scikit-learn model for maternal risk classification.
+- **Frontend:** React, TypeScript, and Vite
+- **Backend:** Python and FastAPI
+- **Database:** PostgreSQL
+- **Machine learning:** scikit-learn K-nearest neighbors (KNN)
+- **Training data:** UCI Maternal Health Risk dataset
 
-```text
-apps/web/       React + TypeScript user interface
-services/api/   FastAPI REST service and model inference
-data/           Training dataset notes and trained model artifacts
-docs/           Architecture and API documentation
-```
+## API approach
 
-## Planned workflow
+I implemented a custom REST API with FastAPI and PostgreSQL instead of consuming the demo APIs from the Postman collection.
+
+The API handles patient registration, visit vitals, assessment forms, patient reports, and maternal health risk predictions.
+
+## Patient workflow
 
 1. Register each patient once.
-2. Record dated height and weight measurements and calculate BMI.
-3. Route the patient to the BMI-appropriate assessment form.
-4. List patients and filter their visits by date.
-5. Submit maternal vital signs to the API and return Low, Mid, or High Risk using a trained model.
+2. Select a patient from the list to start a visit.
+3. Record the visit date, height, and weight. The API calculates BMI.
+4. The BMI determines which assessment form is shown:
+   - BMI less than or equal to 25: General Assessment
+   - BMI greater than 25: Overweight Assessment
+5. After the assessment is saved, return to the patient list.
 
-## Implementation approach
+Patients can have multiple visits on different dates. The list shows each patient once with their latest visit’s BMI status. Use the visit-date filter to view a patient’s record for a specific visit date.
 
-The web application will call the REST API built in this repository. The API will own validation, persistence, BMI status rules, and model inference. The classifier will be trained from a documented maternal health dataset; its preprocessing and model artifact will be versioned with the project, while patient data will live in PostgreSQL.
+## BMI status
 
-## Development status
+The patient report classifies BMI as:
 
-Initial repository outline. Application code, database schema, API contracts, and model are to be added in the following steps.
+- **Underweight:** less than 18.5
+- **Normal:** 18.5 to less than 25
+- **Overweight:** 25 or greater
+
+## Maternal health risk classification
+
+The model is trained by `services/api/app/ml/train_model.py` using the UCI Maternal Health Risk dataset. It uses a scikit-learn pipeline with feature scaling and a KNN classifier.
+
+The prediction endpoint is:
+
+```http
+POST /risk/predict
