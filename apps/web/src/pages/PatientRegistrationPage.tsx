@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { apiRequest, todayInNairobi } from "../api";
 import type { Patient } from "../types";
 
-type PatientInput = Omit<Patient, "id">;
+type PatientInput = Omit<Patient, "id" | "patient_id">;
 
 type Props = {
   onRegistered: (patient: Patient) => void;
@@ -21,7 +21,6 @@ function PatientRegistrationPage({ onRegistered }: Props) {
     const value = (name: string) => String(values.get(name) ?? "").trim();
 
     const patientData: PatientInput = {
-      patient_id: value("patient_id"),
       registration_date: value("registration_date"),
       first_name: value("first_name"),
       middle_name: value("middle_name") || null,
@@ -71,18 +70,10 @@ function PatientRegistrationPage({ onRegistered }: Props) {
             <h2>Patient identity</h2>
           </div>
 
-          <label className="field field-narrow">
-            <span>Patient No. <b>*</b></span>
-            <input
-              name="patient_id"
-              type="text"
-              placeholder="e.g. PAT-00824"
-              autoComplete="off"
-              maxLength={50}
-              required
-            />
-            <small>This number must be unique.</small>
-          </label>
+          <p className="page-description">
+            A unique patient number will be assigned automatically when you save
+            this registration.
+          </p>
 
           <div className="field-grid">
             <label className="field">

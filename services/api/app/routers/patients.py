@@ -1,18 +1,14 @@
+from datetime import date
+from decimal import Decimal
+
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import and_, func, select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
-from app.models import Patient
-from app.schemas import PatientCreate, PatientResponse
-from datetime import date
-from decimal import Decimal
-
-from sqlalchemy import and_, func, select
-
 from app.models import Patient, Vitals
-from app.schemas import PatientReportItem
+from app.schemas import PatientCreate, PatientReportItem, PatientResponse
 
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
@@ -27,17 +23,24 @@ def create_patient(
     patient_data: PatientCreate,
     db: Session = Depends(get_db),
 ) -> Patient:
-    patient = Patient(**patient_data.model_dump())
+    # I let PostgreSQL allocate the number so concurrent registrations stay unique.
+    next_number = db.execute(
+        text("SELECT nextval('patient_number_seq')")
+    ).scalar_one()
+
+    patient = Patient(
+        patient_id=f"PAT-{next_number:03d}",
+        **patient_data.model_dump(),
+    )
     db.add(patient)
 
     try:
         db.commit()
     except IntegrityError as error:
         db.rollback()
-        # I rely on the database constraint too, to catch duplicate IDs even during simultaneous requests.
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Patient ID '{patient_data.patient_id}' is already registered.",
+            detail="Could not register the patient. Please check the submitted details.",
         ) from error
 
     db.refresh(patient)
@@ -48,6 +51,7 @@ def create_patient(
 def list_patients(db: Session = Depends(get_db)) -> list[Patient]:
     statement = select(Patient).order_by(Patient.last_name, Patient.first_name)
     return list(db.scalars(statement).all())
+
 
 @router.get("/report", response_model=list[PatientReportItem])
 def get_patient_report(
@@ -125,6 +129,7 @@ def get_patient_report(
         )
 
     return report
+
 
 @router.get("/{patient_id}", response_model=PatientResponse)
 def get_patient(

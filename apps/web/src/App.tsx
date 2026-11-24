@@ -103,15 +103,15 @@ function App() {
   return (
     <div className="app-shell">
       <header className="masthead">
-        <a className="wordmark" href="/" aria-label="mamashealth home">
+        <a className="wordmark" href="/" aria-label="Superhealth home">
           <span className="brand-mark" aria-hidden="true">
             +
           </span>
-          <span>mamashealth</span>
+          <span>Superhealth</span>
         </a>
 
         <div className="masthead-label">
-          MATERNAL HEALTH <span>—</span> PATIENT RECORDS
+          PATIENT CARE <span>—</span> RECORDS
         </div>
 
         <time className="masthead-date">{todayInNairobi()}</time>

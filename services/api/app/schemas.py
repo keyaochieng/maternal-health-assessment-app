@@ -1,22 +1,18 @@
 from datetime import date
-from typing import Annotated
-
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator, model_validator
-
 from decimal import Decimal
-from typing import Literal
+from typing import Annotated, Literal
 
-from typing import Literal
-from pydantic import StringConstraints
-
-PatientId = Annotated[
-    str,
-    StringConstraints(strip_whitespace=True, min_length=1, max_length=50),
-]
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 
 class PatientCreate(BaseModel):
-    patient_id: PatientId
     registration_date: date
     first_name: Annotated[
         str,
@@ -60,6 +56,7 @@ class PatientResponse(BaseModel):
     last_name: str
     date_of_birth: date
     gender: str
+
 
 class VitalsCreate(BaseModel):
     visit_date: date
@@ -107,6 +104,7 @@ class AssessmentResponse(BaseModel):
     on_diet: Literal["Yes", "No"] | None
     using_drugs: Literal["Yes", "No"] | None
     comments: str
+
 
 class PatientReportItem(BaseModel):
     patient_id: str
