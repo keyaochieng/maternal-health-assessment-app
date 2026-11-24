@@ -1,16 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
-  font-family: "IBM Plex Sans", sans-serif;
-  color: #171918;
-  background: #fff;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  --paper: #f2f5f0;
+  --surface: #ffffff;
   --ink: #171918;
   --muted: #656b70;
   --rule: #d7dadd;
   --accent: #2156d8;
   --accent-light: #eaf0ff;
+  --clay: #bd7158;
+  --clay-light: #f5e8e1;
 }
 
 * {
@@ -21,6 +20,8 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background: var(--paper);
+  font-size: 14px;
 }
 
 button,

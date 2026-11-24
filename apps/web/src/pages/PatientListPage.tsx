@@ -205,7 +205,9 @@ function PatientListPage({ refreshKey, onRegister, onStartVisit }: Props) {
                     </td>
                     <td>
                       {report ? (
-                        <span className="status-label">
+                        <span
+                          className={`status-label status-${report.last_bmi_status.toLowerCase()}`}
+                        >
                           <span aria-hidden="true" />
                           {report.last_bmi_status}
                         </span>

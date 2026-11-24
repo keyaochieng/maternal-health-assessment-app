@@ -82,9 +82,10 @@ function PatientRegistrationPage({ onRegistered }: Props) {
             </label>
 
             <label className="field">
-              <span>Middle name</span>
+              <span>
+                Middle name <small>(optional)</small>
+              </span>
               <input name="middle_name" autoComplete="additional-name" />
-              <small>Optional</small>
             </label>
 
             <label className="field">

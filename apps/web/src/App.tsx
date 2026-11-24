@@ -103,11 +103,9 @@ function App() {
   return (
     <div className="app-shell">
       <header className="masthead">
-        <a className="wordmark" href="/" aria-label="Superhealth home">
-          <span className="brand-mark" aria-hidden="true">
-            +
-          </span>
-          <span>Superhealth</span>
+        <a className="wordmark" href="/" aria-label="SuperHealth home">
+          <span className="brand-mark" aria-hidden="true">S</span>
+          <span>SuperHealth</span>
         </a>
 
         <div className="masthead-label">
@@ -180,7 +178,7 @@ function App() {
       )}
 
       <footer className="page-footer">
-        <span>mamashealth</span>
+        <span>Superhealth</span>
         <span>
           {screen === "patients"
             ? "Patient records"

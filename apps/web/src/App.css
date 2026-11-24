@@ -403,3 +403,177 @@
   .form-footer .primary-button { width: 100%; }
   .patient-table { min-width: 650px; }
 }
+
+
+/* I use these small interactions to make form feedback easier to notice. */
+.brand-mark {
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.wordmark:hover .brand-mark {
+  transform: rotate(-6deg);
+}
+
+button {
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+.field:focus-within {
+  border-color: var(--accent);
+}
+
+.field > span small {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 400;
+}
+
+.status-label {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--accent-light);
+  color: var(--accent);
+  transition: background-color 140ms ease;
+}
+
+.status-underweight {
+  background: #e9f0e9;
+  color: #476b4c;
+}
+
+.status-normal {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.status-overweight {
+  background: var(--clay-light);
+  color: #8e4c37;
+}
+
+.patient-table tbody tr {
+  transition: background-color 140ms ease;
+}
+
+.patient-table tbody tr:hover {
+  background: var(--surface);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.content-page,
+.vitals-page {
+  animation: page-enter 180ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* I keep supporting text readable without competing with the page headings. */
+.field > span,
+.patient-table th,
+.status-label,
+.masthead-label,
+.masthead-date,
+.page-footer {
+  font-size: 0.9rem;
+}
+
+.field input,
+.field select,
+.field textarea,
+.patient-table td {
+  font-size: 1rem;
+}
+
+.field > span small,
+.field small {
+  font-size: 0.85rem;
+}
+
+/* I keep the type scale readable and consistent across the page. */
+body {
+  font-size: 15px;
+}
+
+.masthead-label,
+.masthead-date,
+.page-footer {
+  font-size: 11px;
+}
+
+.nav-button,
+.primary-button,
+.row-action {
+  font-size: 12px;
+}
+
+.eyebrow {
+  font-size: 10px;
+}
+
+h1 {
+  font-size: 36px;
+}
+
+.page-description {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.field > span,
+.search-field,
+.date-filter {
+  font-size: 12px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  font-size: 14px;
+}
+
+.patient-table th {
+  font-size: 11px;
+}
+
+.patient-table td {
+  font-size: 13px;
+}
+
+.patient-table td strong {
+  font-size: 14px;
+}
+
+.patient-table td small {
+  font-size: 11px;
+}
+
+.status-label {
+  font-size: 12px;
+}
