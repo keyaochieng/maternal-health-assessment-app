@@ -150,6 +150,7 @@
 
 .search-field,
 .date-filter,
+.sort-filter,
 .field {
   display: grid;
   gap: 6px;
@@ -158,6 +159,7 @@
 .search-field { flex: 1; }
 .search-field span,
 .date-filter span,
+.sort-filter span,
 .field > span {
   font-size: 10px;
   font-weight: 600;
@@ -165,6 +167,7 @@
 
 .search-field input,
 .date-filter input,
+.sort-filter select,
 .field input,
 .field select,
 .field textarea {
@@ -180,6 +183,7 @@
 .field textarea { padding: 10px; resize: vertical; }
 .search-field input:focus,
 .date-filter input:focus,
+.sort-filter select:focus,
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
@@ -548,7 +552,8 @@ h1 {
 
 .field > span,
 .search-field,
-.date-filter {
+.date-filter,
+.sort-filter {
   font-size: 12px;
 }
 

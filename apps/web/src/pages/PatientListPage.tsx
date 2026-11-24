@@ -7,6 +7,8 @@ type PatientRow = {
   report: PatientReport | null;
 };
 
+type SortOption = "name" | "visit-date";
+
 type Props = {
   refreshKey: number;
   onRegister: () => void;
@@ -34,6 +36,7 @@ function PatientListPage({ refreshKey, onRegister, onStartVisit }: Props) {
   const [rows, setRows] = useState<PatientRow[]>([]);
   const [search, setSearch] = useState("");
   const [visitDate, setVisitDate] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("name");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -90,25 +93,57 @@ function PatientListPage({ refreshKey, onRegister, onStartVisit }: Props) {
 
   const visibleRows = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
+    const matchingRows = normalizedSearch
+      ? rows.filter(({ patient }) => {
+          const name = [
+            patient.first_name,
+            patient.middle_name,
+            patient.last_name,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
 
-    if (!normalizedSearch) return rows;
+          return (
+            name.includes(normalizedSearch) ||
+            patient.patient_id.toLowerCase().includes(normalizedSearch)
+          );
+        })
+      : [...rows];
 
-    return rows.filter(({ patient }) => {
-      const name = [
-        patient.first_name,
-        patient.middle_name,
-        patient.last_name,
+    const collator = new Intl.Collator(undefined, { sensitivity: "base" });
+    matchingRows.sort((left, right) => {
+      if (sortBy === "visit-date") {
+        const leftDate = left.report?.visit_date ?? "";
+        const rightDate = right.report?.visit_date ?? "";
+        const byDate = rightDate.localeCompare(leftDate);
+
+        if (byDate !== 0) return byDate;
+      }
+
+      const leftName = [
+        left.patient.first_name,
+        left.patient.middle_name,
+        left.patient.last_name,
       ]
         .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
+        .join(" ");
+      const rightName = [
+        right.patient.first_name,
+        right.patient.middle_name,
+        right.patient.last_name,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
       return (
-        name.includes(normalizedSearch) ||
-        patient.patient_id.toLowerCase().includes(normalizedSearch)
+        collator.compare(leftName, rightName) ||
+        collator.compare(left.patient.patient_id, right.patient.patient_id)
       );
     });
-  }, [rows, search]);
+
+    return matchingRows;
+  }, [rows, search, sortBy]);
 
   return (
     <main className="content-page">
@@ -142,6 +177,17 @@ function PatientListPage({ refreshKey, onRegister, onStartVisit }: Props) {
             value={visitDate}
             onChange={(event) => setVisitDate(event.target.value)}
           />
+        </label>
+
+        <label className="sort-filter">
+          <span>Sort by</span>
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as SortOption)}
+          >
+            <option value="name">Name (A–Z)</option>
+            <option value="visit-date">Visit date (newest first)</option>
+          </select>
         </label>
 
         {visitDate && (
