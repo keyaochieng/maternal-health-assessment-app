@@ -23,6 +23,8 @@ I built a custom REST API with FastAPI and PostgreSQL instead of using the demo 
 
 Patients may have visits on different dates. The list displays each patient once with their latest visit’s BMI status. Use the visit-date filter to find patients with a visit on a particular date.
 
+The patient list defaults to alphabetical order by name (A–Z). Use **Sort by** to switch to visit date with the newest visits first. Patients without a recorded visit appear after patients with visit dates; ties are listed alphabetically.
+
 BMI status is:
 
 - **Underweight:** BMI below 18.5
