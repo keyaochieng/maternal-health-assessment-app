@@ -6,8 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import Base, engine
-from app.routers import assessments, patients, risk, vitals
-
+from app.routers import assessments, patients, vitals
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -26,7 +25,6 @@ app = FastAPI(
 app.include_router(patients.router)
 app.include_router(vitals.router)
 app.include_router(assessments.router)
-app.include_router(risk.router)
 
 
 @app.get("/health", tags=["Health"])

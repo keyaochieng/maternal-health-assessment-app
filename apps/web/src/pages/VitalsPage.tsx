@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { apiRequest, todayInNairobi } from "../api";
-import type { Patient, SavedVitals } from "../types";
+import type { MaternalRiskLevel, Patient, SavedVitals } from "../types";
 import "./VitalsPage.css";
 
 type Props = {
@@ -10,12 +10,18 @@ type Props = {
 
 type VitalsResponse = {
   bmi: number;
+  risk_level: MaternalRiskLevel | null;
 };
 
 function VitalsPage({ patient, onSaved }: Props) {
   const [visitDate, setVisitDate] = useState(todayInNairobi());
   const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
+  const [systolicBp, setSystolicBp] = useState("");
+  const [diastolicBp, setDiastolicBp] = useState("");
+  const [bloodSugar, setBloodSugar] = useState("");
+  const [bodyTemperature, setBodyTemperature] = useState("");
+  const [heartRate, setHeartRate] = useState("");
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -23,6 +29,16 @@ function VitalsPage({ patient, onSaved }: Props) {
   const weight = Number(weightKg);
   const bmi =
     height > 0 && weight > 0 ? weight / (height / 100) ** 2 : null;
+
+  const riskInputs = [
+    systolicBp,
+    diastolicBp,
+    bloodSugar,
+    bodyTemperature,
+    heartRate,
+  ];
+  const hasAnyRiskInput = riskInputs.some((value) => value.trim() !== "");
+  const hasAllRiskInputs = riskInputs.every((value) => value.trim() !== "");
 
   const patientName = [
     patient.first_name,
@@ -41,18 +57,36 @@ function VitalsPage({ patient, onSaved }: Props) {
       return;
     }
 
+    if (hasAnyRiskInput && !hasAllRiskInputs) {
+      setError(
+        "Enter all four optional maternal measurements, or leave them blank.",
+      );
+      return;
+    }
+
     setIsSaving(true);
+
+    const requestBody = {
+      visit_date: visitDate,
+      height_cm: height,
+      weight_kg: weight,
+      ...(hasAllRiskInputs
+        ? {
+            systolic_bp: Number(systolicBp),
+            diastolic_bp: Number(diastolicBp),
+            blood_sugar: Number(bloodSugar),
+            body_temperature: Number(bodyTemperature),
+            heart_rate: Number(heartRate),
+          }
+        : {}),
+    };
 
     try {
       const response = await apiRequest<VitalsResponse>(
         `/patients/${encodeURIComponent(patient.patient_id)}/vitals`,
         {
           method: "POST",
-          body: JSON.stringify({
-            visit_date: visitDate,
-            height_cm: height,
-            weight_kg: weight,
-          }),
+          body: JSON.stringify(requestBody),
         },
       );
 
@@ -60,6 +94,7 @@ function VitalsPage({ patient, onSaved }: Props) {
         visit_date: visitDate,
         bmi: response.bmi,
         next_assessment: response.bmi > 25 ? "overweight" : "general",
+        risk_level: response.risk_level,
       });
     } catch (caughtError) {
       setError(
@@ -144,10 +179,85 @@ function VitalsPage({ patient, onSaved }: Props) {
           </span>
         </aside>
 
+        <fieldset className="risk-inputs">
+          <legend>
+            Maternal risk measurements <span>Optional</span>
+          </legend>
+          <p>
+            Enter all four to receive a model prediction. Age is calculated
+            from the patient’s date of birth.
+          </p>
+
+          <div className="risk-fields">
+            <label className="field">
+              <span>Systolic blood pressure (mmHg)</span>
+              <input
+                type="number"
+                min="1"
+                max="300"
+                step="1"
+                value={systolicBp}
+                onChange={(event) => setSystolicBp(event.target.value)}
+              />
+            </label>
+
+            <label className="field">
+              <span>Diastolic blood pressure (mmHg)</span>
+              <input
+                type="number"
+                min="1"
+                max="200"
+                step="1"
+                value={diastolicBp}
+                onChange={(event) => setDiastolicBp(event.target.value)}
+              />
+            </label>
+
+            <label className="field">
+              <span>Blood sugar (mmol/L)</span>
+              <input
+                type="number"
+                min="0.1"
+                max="100"
+                step="0.1"
+                value={bloodSugar}
+                onChange={(event) => setBloodSugar(event.target.value)}
+              />
+            </label>
+
+            <label className="field">
+              <span>Body temperature (°F)</span>
+              <input
+                type="number"
+                min="1"
+                max="120"
+                step="0.1"
+                value={bodyTemperature}
+                onChange={(event) => setBodyTemperature(event.target.value)}
+              />
+            </label>
+
+            <label className="field">
+              <span>Heart rate (bpm)</span>
+              <input
+                type="number"
+                min="1"
+                max="300"
+                step="1"
+                value={heartRate}
+                onChange={(event) => setHeartRate(event.target.value)}
+              />
+            </label>
+          </div>
+        </fieldset>
+
         {error && <p className="form-error" role="alert">{error}</p>}
 
         <div className="form-footer">
-          <p>All fields are required.</p>
+          <p>
+            Fields marked * are required. Maternal risk measurements are
+            optional.
+          </p>
           <button className="primary-button" type="submit" disabled={isSaving}>
             {isSaving ? "Saving…" : "Save vitals"}
           </button>

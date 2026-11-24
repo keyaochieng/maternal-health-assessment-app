@@ -58,10 +58,48 @@ class PatientResponse(BaseModel):
     gender: str
 
 
+RiskLevel = Literal["Low Risk", "Mid Risk", "High Risk"]
+
+
 class VitalsCreate(BaseModel):
     visit_date: date
     height_cm: Decimal = Field(gt=0, le=300, max_digits=6, decimal_places=2)
     weight_kg: Decimal = Field(gt=0, le=500, max_digits=6, decimal_places=2)
+    systolic_bp: Decimal | None = Field(
+        default=None, gt=0, le=300, max_digits=6, decimal_places=2
+    )
+    diastolic_bp: Decimal | None = Field(
+        default=None, gt=0, le=200, max_digits=6, decimal_places=2
+    )
+    blood_sugar: Decimal | None = Field(
+        default=None, gt=0, le=100, max_digits=6, decimal_places=2
+    )
+    body_temperature: Decimal | None = Field(
+        default=None, gt=0, le=120, max_digits=6, decimal_places=2
+    )
+    heart_rate: Decimal | None = Field(
+        default=None, gt=0, le=300, max_digits=6, decimal_places=2
+    )
+
+    @model_validator(mode="after")
+    def validate_risk_measurements(self) -> "VitalsCreate":
+        risk_values = (
+            self.systolic_bp,
+            self.diastolic_bp,
+            self.blood_sugar,
+            self.body_temperature,
+            self.heart_rate,
+        )
+
+        # I accept all model inputs together, or none, so partial data can't produce a prediction.
+        if any(value is not None for value in risk_values) and any(
+            value is None for value in risk_values
+        ):
+            raise ValueError(
+                "Enter all maternal risk measurements to get a risk prediction."
+            )
+
+        return self
 
 
 class VitalsResponse(BaseModel):
@@ -71,6 +109,12 @@ class VitalsResponse(BaseModel):
     weight_kg: Decimal
     bmi: Decimal
     next_assessment: Literal["general", "overweight"]
+    systolic_bp: Decimal | None = None
+    diastolic_bp: Decimal | None = None
+    blood_sugar: Decimal | None = None
+    body_temperature: Decimal | None = None
+    heart_rate: Decimal | None = None
+    risk_level: RiskLevel | None = None
 
 
 RequiredComment = Annotated[

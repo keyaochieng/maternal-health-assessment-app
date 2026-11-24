@@ -5,7 +5,12 @@ import AssessmentPage from "./pages/AssessmentPage";
 import PatientListPage from "./pages/PatientListPage";
 import PatientRegistrationPage from "./pages/PatientRegistrationPage";
 import VitalsPage from "./pages/VitalsPage";
-import type { AssessmentType, Patient, SavedVitals } from "./types";
+import type {
+  AssessmentType,
+  MaternalRiskLevel,
+  Patient,
+  SavedVitals,
+} from "./types";
 
 type Screen = "patients" | "registration" | "vitals" | "assessment";
 
@@ -14,6 +19,7 @@ type SavedAppState = {
   selectedPatient: Patient | null;
   visitDate: string;
   assessmentType: AssessmentType;
+  riskLevel: MaternalRiskLevel | null;
 };
 
 const VISIT_STATE_KEY = "mamashealth-current-visit";
@@ -24,6 +30,7 @@ function readSavedAppState(): SavedAppState {
     selectedPatient: null,
     visitDate: "",
     assessmentType: "general",
+    riskLevel: null,
   };
 
   try {
@@ -37,10 +44,21 @@ function readSavedAppState(): SavedAppState {
       "vitals",
       "assessment",
     ];
+    const validRiskLevels: MaternalRiskLevel[] = [
+      "Low Risk",
+      "Mid Risk",
+      "High Risk",
+    ];
 
     if (!parsed.screen || !validScreens.includes(parsed.screen)) {
       return defaultState;
     }
+
+    const riskLevel = validRiskLevels.includes(
+      parsed.riskLevel as MaternalRiskLevel,
+    )
+      ? (parsed.riskLevel as MaternalRiskLevel)
+      : null;
 
     return {
       screen: parsed.screen,
@@ -48,6 +66,7 @@ function readSavedAppState(): SavedAppState {
       visitDate: parsed.visitDate ?? "",
       assessmentType:
         parsed.assessmentType === "overweight" ? "overweight" : "general",
+      riskLevel,
     };
   } catch {
     return defaultState;
@@ -64,6 +83,9 @@ function App() {
   const [assessmentType, setAssessmentType] = useState<AssessmentType>(
     initialState.assessmentType,
   );
+  const [riskLevel, setRiskLevel] = useState<MaternalRiskLevel | null>(
+    initialState.riskLevel,
+  );
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -72,21 +94,26 @@ function App() {
       selectedPatient,
       visitDate,
       assessmentType,
+      riskLevel,
     };
 
     sessionStorage.setItem(VISIT_STATE_KEY, JSON.stringify(savedState));
-  }, [screen, selectedPatient, visitDate, assessmentType]);
+  }, [screen, selectedPatient, visitDate, assessmentType, riskLevel]);
 
   function startVisit(patient: Patient) {
     setSelectedPatient(patient);
     setVisitDate("");
     setAssessmentType("general");
+    setRiskLevel(null);
     setScreen("vitals");
   }
 
   function handleVitalsSaved(vitals: SavedVitals) {
     setVisitDate(vitals.visit_date);
     setAssessmentType(vitals.next_assessment);
+    setRiskLevel(vitals.risk_level);
+    // I refresh the patient report as soon as vitals are saved, since that already creates a visit.
+    setRefreshKey((value) => value + 1);
     setScreen("assessment");
   }
 
@@ -94,6 +121,7 @@ function App() {
     setSelectedPatient(null);
     setVisitDate("");
     setAssessmentType("general");
+    setRiskLevel(null);
     setScreen("patients");
     setRefreshKey((value) => value + 1);
   }
@@ -159,6 +187,7 @@ function App() {
           onRegistered={(patient) => {
             setSelectedPatient(patient);
             setVisitDate("");
+            setRiskLevel(null);
             setScreen("vitals");
           }}
         />
@@ -173,6 +202,7 @@ function App() {
           patient={selectedPatient}
           visitDate={visitDate}
           assessmentType={assessmentType}
+          riskLevel={riskLevel}
           onSaved={finishAssessment}
         />
       )}

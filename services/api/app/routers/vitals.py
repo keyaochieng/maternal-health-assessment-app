@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Literal
 
@@ -7,11 +8,24 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_db
+from app.ml.predictor import predict_risk
 from app.models import Patient, Vitals
 from app.schemas import VitalsCreate, VitalsResponse
 
 
 router = APIRouter(prefix="/patients/{patient_id}/vitals", tags=["Vitals"])
+
+
+def age_on(birth_date: date, reference_date: date) -> int:
+    age = reference_date.year - birth_date.year
+
+    if (reference_date.month, reference_date.day) < (
+        birth_date.month,
+        birth_date.day,
+    ):
+        age -= 1
+
+    return age
 
 
 def to_response(vitals: Vitals) -> VitalsResponse:
@@ -26,6 +40,12 @@ def to_response(vitals: Vitals) -> VitalsResponse:
         weight_kg=vitals.weight_kg,
         bmi=vitals.bmi,
         next_assessment=next_assessment,
+        systolic_bp=vitals.systolic_bp,
+        diastolic_bp=vitals.diastolic_bp,
+        blood_sugar=vitals.blood_sugar,
+        body_temperature=vitals.body_temperature,
+        heart_rate=vitals.heart_rate,
+        risk_level=vitals.risk_level,
     )
 
 
@@ -51,12 +71,47 @@ def create_vitals(
         rounding=ROUND_HALF_UP,
     )
 
+    risk_level = None
+
+    if vitals_data.systolic_bp is not None:
+        # I use the visit date so the model receives the patient's age at this visit.
+        patient_age = age_on(patient.date_of_birth, vitals_data.visit_date)
+
+        features = {
+            "Age": float(patient_age),
+            "SystolicBP": float(vitals_data.systolic_bp),
+            "DiastolicBP": float(vitals_data.diastolic_bp),
+            "BS": float(vitals_data.blood_sugar),
+            "BodyTemp": float(vitals_data.body_temperature),
+            "HeartRate": float(vitals_data.heart_rate),
+        }
+
+        try:
+            risk_level = predict_risk(features)
+        except FileNotFoundError as error:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The trained maternal health model file was not found.",
+            ) from error
+
+        if risk_level not in {"Low Risk", "Mid Risk", "High Risk"}:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="The model returned an unrecognized risk classification.",
+            )
+
     vitals = Vitals(
         patient_record_id=patient.id,
         visit_date=vitals_data.visit_date,
         height_cm=vitals_data.height_cm,
         weight_kg=vitals_data.weight_kg,
         bmi=bmi,
+        systolic_bp=vitals_data.systolic_bp,
+        diastolic_bp=vitals_data.diastolic_bp,
+        blood_sugar=vitals_data.blood_sugar,
+        body_temperature=vitals_data.body_temperature,
+        heart_rate=vitals_data.heart_rate,
+        risk_level=risk_level,
     )
     db.add(vitals)
 

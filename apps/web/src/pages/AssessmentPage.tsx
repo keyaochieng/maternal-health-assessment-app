@@ -1,11 +1,16 @@
 import { useState, type FormEvent } from "react";
 import { apiRequest } from "../api";
-import type { AssessmentType, Patient } from "../types";
+import type {
+  AssessmentType,
+  MaternalRiskLevel,
+  Patient,
+} from "../types";
 
 type Props = {
   patient: Patient;
   visitDate: string;
   assessmentType: AssessmentType;
+  riskLevel: MaternalRiskLevel | null;
   onSaved: () => void;
 };
 
@@ -13,6 +18,7 @@ function AssessmentPage({
   patient,
   visitDate,
   assessmentType,
+  riskLevel,
   onSaved,
 }: Props) {
   const [isSaving, setIsSaving] = useState(false);
@@ -103,6 +109,14 @@ function AssessmentPage({
           <strong>{visitDate}</strong>
         </div>
       </section>
+      {riskLevel && (
+        <div className="notice" role="status">
+          <strong>Maternal risk model result: {riskLevel}</strong>
+          <span>
+            {" "}This prediction is an assessment result, not a medical diagnosis.
+          </span>
+        </div>
+      )}
 
       {errorMessage && (
         <div className="notice notice-error" role="alert">{errorMessage}</div>

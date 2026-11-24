@@ -31,45 +31,45 @@ BMI status is:
 
 ## Maternal health risk classification
 
-The model is trained using the UCI Maternal Health Risk dataset. Its scikit-learn pipeline scales the input features and classifies them using KNN.
-
-The prediction endpoint is:
+The model is trained using the UCI Maternal Health Risk dataset. Its scikit-learn pipeline scales the input features and classifies them using KNN. Prediction is part of the existing vitals endpoint:
 
 ```http
-POST /risk/predict
+POST /patients/{patient_id}/vitals
 ```
 
-It accepts these features:
+Visit date, height, and weight are required. To receive a model prediction, provide all four optional measurements:
 
-- `Age`
-- `SystolicBP`
-- `DiastolicBP`
-- `BS` (blood sugar)
-- `BodyTemp`
-- `HeartRate`
+- `systolic_bp` and `diastolic_bp` in mmHg
+- `blood_sugar` in mmol/L
+- `body_temperature` in °F
+- `heart_rate` in bpm
 
-Example request:
+The backend calculates age from the patient's date of birth. If none of the optional measurements are provided, the regular BMI flow continues and `risk_level` is `null`. With all four measurements, the response includes `Low Risk`, `Mid Risk`, or `High Risk`. This classification is an assessment result, not a medical diagnosis.
+
+Example request body:
 
 ```json
 {
-  "Age": 25,
-  "SystolicBP": 120,
-  "DiastolicBP": 80,
-  "BS": 8,
-  "BodyTemp": 98.6,
-  "HeartRate": 70
+  "visit_date": "2026-11-25",
+  "height_cm": 160,
+  "weight_kg": 60,
+  "systolic_bp": 120,
+  "diastolic_bp": 80,
+  "blood_sugar": 8,
+  "body_temperature": 98.6,
+  "heart_rate": 70
 }
 ```
 
-Example response:
+The saved vitals response includes the BMI-based assessment choice and, when requested, the model classification:
 
 ```json
 {
+  "bmi": "23.44",
+  "next_assessment": "general",
   "risk_level": "Low Risk"
 }
 ```
-
-The model returns `Low Risk`, `Mid Risk`, or `High Risk`. This classification is an assessment result, not a medical diagnosis.
 
 Interactive API documentation is available at `/docs` while the backend is running.
 
@@ -82,12 +82,11 @@ Interactive API documentation is available at `/docs` while the backend is runni
 | `GET` | `/patients/{patient_id}` | Get a patient |
 | `GET` | `/patients/report` | Get the latest visit report |
 | `GET` | `/patients/report?visit_date=YYYY-MM-DD` | Filter the report by visit date |
-| `POST` | `/patients/{patient_id}/vitals` | Save vitals for a visit |
+| `POST` | `/patients/{patient_id}/vitals` | Save visit vitals, calculate BMI, and optionally classify maternal risk |
 | `GET` | `/patients/{patient_id}/vitals` | List a patient’s vitals history |
 | `POST` | `/patients/{patient_id}/assessments/general` | Save a General Assessment |
 | `POST` | `/patients/{patient_id}/assessments/overweight` | Save an Overweight Assessment |
 | `GET` | `/patients/{patient_id}/assessments` | List a patient’s assessments |
-| `POST` | `/risk/predict` | Predict maternal health risk |
 | `GET` | `/health` | Check API and database health |
 
 ## Run locally
@@ -115,10 +114,10 @@ From `services/api`:
 ```bash
 source .venv/bin/activate
 python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
-The API runs at `http://127.0.0.1:8000`. Open `http://127.0.0.1:8000/docs` for interactive API documentation.
+The API runs at `http://127.0.0.1:8001`. Open `http://127.0.0.1:8001/docs` for interactive API documentation.
 
 To retrain the model and recreate its dataset and model artifact, run this from `services/api`:
 

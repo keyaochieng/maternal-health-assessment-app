@@ -32,6 +32,28 @@ class Vitals(Base):
         ),
         CheckConstraint("height_cm > 0", name="ck_vitals_height_positive"),
         CheckConstraint("weight_kg > 0", name="ck_vitals_weight_positive"),
+        CheckConstraint(
+            """
+            (
+                systolic_bp IS NULL
+                AND diastolic_bp IS NULL
+                AND blood_sugar IS NULL
+                AND body_temperature IS NULL
+                AND heart_rate IS NULL
+                AND risk_level IS NULL
+            )
+            OR
+            (
+                systolic_bp IS NOT NULL
+                AND diastolic_bp IS NOT NULL
+                AND blood_sugar IS NOT NULL
+                AND body_temperature IS NOT NULL
+                AND heart_rate IS NOT NULL
+                AND risk_level IN ('Low Risk', 'Mid Risk', 'High Risk')
+            )
+            """,
+            name="ck_vitals_complete_risk_prediction",
+        ),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -43,6 +65,12 @@ class Vitals(Base):
     height_cm: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
     weight_kg: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
     bmi: Mapped[Decimal] = mapped_column(Numeric(6, 2), nullable=False)
+    systolic_bp: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
+    diastolic_bp: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
+    blood_sugar: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
+    body_temperature: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
+    heart_rate: Mapped[Decimal | None] = mapped_column(Numeric(6, 2))
+    risk_level: Mapped[str | None] = mapped_column(String(20))
 
 class Assessment(Base):
     __tablename__ = "assessments"

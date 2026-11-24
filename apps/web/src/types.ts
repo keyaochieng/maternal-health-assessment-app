@@ -10,6 +10,7 @@ export type Patient = {
 };
 
 export type BmiStatus = "Underweight" | "Normal" | "Overweight";
+export type MaternalRiskLevel = "Low Risk" | "Mid Risk" | "High Risk";
 
 export type PatientReport = {
   patient_id: string;
@@ -23,6 +24,7 @@ export type SavedVitals = {
   bmi: number;
   visit_date: string;
   next_assessment: "general" | "overweight";
+  risk_level: MaternalRiskLevel | null;
 };
 
 export type AssessmentType = "general" | "overweight";
