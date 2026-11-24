@@ -1,0 +1,157 @@
+.vitals-page {
+  width: min(100%, 970px);
+  margin: 0 auto;
+  padding: 52px 0 64px;
+}
+
+.vitals-intro {
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.vitals-intro h1 {
+  margin: 9px 0 7px;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(33px, 4vw, 46px);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+}
+
+.vitals-intro > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.patient-context {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.7fr) minmax(220px, 1.3fr);
+  gap: 20px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.patient-context div {
+  display: grid;
+  gap: 5px;
+}
+
+.patient-context span {
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.patient-context strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vitals-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  column-gap: 35px;
+  align-items: start;
+  padding-top: 24px;
+}
+
+.vitals-form-heading {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 17px;
+}
+
+.vitals-form-heading h2 {
+  margin: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vitals-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bmi-preview {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 95px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+  background: var(--accent-light);
+}
+
+.bmi-preview strong {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 25px;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+
+.bmi-preview > span:last-child {
+  color: #42484d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.vitals-form .form-footer {
+  grid-column: 1 / -1;
+  margin-top: 22px;
+  border-top: 1px solid var(--rule);
+  padding-top: 16px;
+}
+
+.vitals-result {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-top: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.vitals-result div {
+  display: grid;
+  gap: 6px;
+}
+
+.vitals-result div > strong {
+  font-size: 13px;
+}
+
+@media (max-width: 760px) {
+  .vitals-page {
+    padding: 36px 0 44px;
+  }
+
+  .vitals-form {
+    grid-template-columns: 1fr;
+    row-gap: 18px;
+  }
+
+  .vitals-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bmi-preview {
+    grid-row: auto;
+  }
+
+  .vitals-form .form-footer {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 520px) {
+  .patient-context,
+  .vitals-fields {
+    grid-template-columns: 1fr;
+  }
+}
